@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thanh toán - Secondhand Shop</title>
+    <link rel="stylesheet" href="css/user-style.css">
+    <style>
+        .checkout-container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .checkout-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+
+        .order-summary {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            height: fit-content;
+        }
+
+        .order-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .order-item-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .order-item-info {
+            flex: 1;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+        }
+
+        .summary-row.total {
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-top: 2px solid var(--border-color);
+            margin-top: 1rem;
+            padding-top: 1rem;
+            color: var(--danger-color);
+        }
+
+        @media (max-width: 768px) {
+            .checkout-container {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+<header class="main-header">
+    <div class="header-container">
+        <div class="header-left">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🛍️</span>
+                <span>Secondhand Shop</span>
+            </a>
+            
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html" class="active">Trang chủ</a></li>
+                    <li><a href="products.html">Sản phẩm</a></li>
+                </ul>
+            </nav>
+        </div>
+        
+        <div class="header-right">
+            <a href="cart.html" class="cart-wrapper-minimal">
+    <svg class="cart-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+    </svg>
+    <span class="cart-badge-minimal" id="cartBadge">0</span>
+</a>
+            
+            <div id="userMenu">
+            </div>
+        </div>
+</header>
+
+    <!-- MAIN CONTENT -->
+    <main class="container">
+        <h1>Thanh toán</h1>
+
+        <div class="checkout-container">
+            <!-- FORM -->
+            <div class="checkout-form">
+                <h2>Thông tin giao hàng</h2>
+
+                <form id="checkoutForm" onsubmit="handleCheckout(event)">
+                    <div class="form-group">
+                        <label for="fullName">Họ và tên <span style="color: red;">*</span></label>
+                        <input type="text" id="fullName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Số điện thoại <span style="color: red;">*</span></label>
+                        <input type="tel" id="phone" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="address">Địa chỉ giao hàng <span style="color: red;">*</span></label>
+                        <textarea id="address" rows="3" required placeholder="Số nhà, tên đường, phường/xã, quận/huyện, thành phố"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="note">Ghi chú đơn hàng</label>
+                        <textarea id="note" rows="2" placeholder="Ví dụ: Giao giờ hành chính, gọi trước khi giao..."></textarea>
+                    </div>
+
+                    <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Phương thức thanh toán</h3>
+
+<div class="form-group">
+    <label class="payment-method-label" style="display: flex; align-items: center; cursor: pointer; padding: 10px; border: 1px solid #eee; border-radius: 8px; margin-bottom: 10px;">
+        <input type="radio" name="paymentMethod" value="COD" checked style="margin-right: 10px; width: 18px; height: 18px;">
+        <span>💵 Thanh toán khi nhận hàng (COD)</span>
+    </label>
+</div>
+
+<div class="form-group">
+    <label class="payment-method-label" style="display: flex; align-items: center; cursor: pointer; padding: 10px; border: 1px solid #eee; border-radius: 8px;">
+        <input type="radio" name="paymentMethod" value="BANK_TRANSFER" style="margin-right: 10px; width: 18px; height: 18px;">
+        <span>🏦 Chuyển khoản ngân hàng</span>
+    </label>
+</div>
+
+                    <button type="submit" class="btn btn-primary btn-block" style="margin-top: 2rem;">
+                        Đặt hàng
+                    </button>
+                </form>
+            </div>
+
+            <!-- ORDER SUMMARY -->
+            <div class="order-summary">
+                <h2>Đơn hàng của bạn</h2>
+
+                <div id="orderItems">
+                    <!-- Order items will be loaded here -->
+                </div>
+
+                <div style="margin-top: 1.5rem;">
+                    <div class="summary-row">
+                        <span>Tạm tính:</span>
+                        <span id="subtotal">0đ</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Phí vận chuyển:</span>
+                        <span>Miễn phí</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Tổng cộng:</span>
+                        <span id="totalAmount">0đ</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="main-footer">
+        <p>&copy; 2026 Secondhand Shop. All rights reserved.</p>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!requireLogin()) return;
+
+            const cart = await validateCart();
+            if (cart.length === 0) {
+                alert('Giỏ hàng trống!');
+                window.location.href = 'cart.html';
+                return;
+            }
+
+            await loadUserInfo();
+            loadOrderSummary();
+        });
+
+        async function loadUserInfo() {
+            const user = getCurrentUser();
+            if (!user) return;
+
+            try {
+                const customer = await fetchGet(API_ENDPOINTS.CUSTOMER_BY_USER(user.userId));
+
+                document.getElementById('fullName').value = user.fullName || '';
+                document.getElementById('phone').value = customer.phone || '';
+
+                const addressParts = [
+                    customer.address,
+                    customer.ward,
+                    customer.district,
+                    customer.city
+                ].filter(Boolean);
+
+                document.getElementById('address').value = addressParts.join(', ');
+            } catch (error) {
+                console.error('Error loading user info:', error);
+            }
+        }
+
+        function loadOrderSummary() {
+            const cart = getCart();
+            const orderItemsDiv = document.getElementById('orderItems');
+
+            if (!cart || cart.length === 0) {
+                window.location.href = 'cart.html';
+                return;
+            }
+
+            orderItemsDiv.innerHTML = cart.map(item => `
+                <div class="order-item">
+                    <img src="${item.imageUrl || 'images/placeholder.png'}"
+                         onerror="this.src='images/placeholder.png'"
+                         alt="${item.productName}"
+                         class="order-item-image">
+                    <div class="order-item-info">
+                        <div><strong>${item.productName}</strong></div>
+                        <div style="color: #666;">Số lượng: ${item.quantity}</div>
+                        <div style="color: var(--danger-color); font-weight: bold;">
+                            ${formatCurrency(item.price * item.quantity)}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            document.getElementById('subtotal').textContent = formatCurrency(total);
+            document.getElementById('totalAmount').textContent = formatCurrency(total);
+        }
+
+        async function handleCheckout(event) {
+    event.preventDefault();
+
+    const user = getCurrentUser();
+    if (!user) {
+        showNotification('Vui lòng đăng nhập!', 'error');
+        return;
+    }
+
+    const cart = getCart();
+    if (cart.length === 0) {
+        showNotification('Giỏ hàng trống!', 'error');
+        return;
+    }
+
+    try {
+        // Hiển thị loading
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '⏳ Đang xử lý...';
+
+        // Lấy customer info
+        const customer = await fetchGet(API_ENDPOINTS.CUSTOMER_BY_USER(user.userId));
+
+        const total = getCartTotal();
+
+        // Tạo order data
+        const orderData = {
+            customerId: customer.id,
+            totalAmount: total,
+            discountAmount: 0,
+            finalAmount: total,
+            shippingAddress: document.getElementById('address').value,
+            shippingPhone: document.getElementById('phone').value,
+            note: document.getElementById('note').value,
+            orderItems: cart.map(item => ({
+                productId: item.productId,
+                price: item.price,
+                quantity: item.quantity,
+                subtotal: item.price * item.quantity
+            }))
+        };
+
+        console.log('Creating order:', orderData);
+
+        // Gửi đơn hàng
+        const order = await fetchPost(API_ENDPOINTS.ORDERS_CHECKOUT, orderData);
+
+        showNotification('Đặt hàng thành công!', 'success');
+
+        // Xóa giỏ hàng
+        clearCart();
+
+        // Chuyển đến trang đơn hàng
+        setTimeout(() => {
+            window.location.href = `my-orders.html`;
+        }, 1500);
+
+    } catch (error) {
+        console.error('Checkout error:', error);
+        
+        // Hiển thị lỗi chi tiết
+        let errorMessage = 'Đặt hàng thất bại! ';
+        
+        if (error.message.includes('không tồn tại')) {
+            errorMessage += 'Một số sản phẩm trong giỏ hàng đã hết hàng hoặc bị xóa. Vui lòng kiểm tra lại giỏ hàng.';
+        } else if (error.message.includes('chỉ còn')) {
+            errorMessage += error.message;
+        } else if (error.message.includes('đã được bán')) {
+            errorMessage += error.message;
+        } else {
+            errorMessage += error.message;
+        }
+        
+        showNotification(errorMessage, 'error');
+        
+        // Reset button
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Đặt hàng';
+    }
+}
+    </script>
+</body>
+</html>

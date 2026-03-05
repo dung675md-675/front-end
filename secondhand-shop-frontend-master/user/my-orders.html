@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lịch sử đơn hàng - Secondhand Shop</title>
+    <link rel="stylesheet" href="css/user-style.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <div class="header-left">
+                <a href="index.html" class="logo">
+                    <span class="logo-icon">🛍️</span>
+                    <span>Secondhand Shop</span>
+                </a>
+            </div>
+            <div class="header-right">
+    <a href="cart.html" class="cart-wrapper-minimal" style="position: relative; text-decoration: none; color: white; display: flex; align-items: center; gap: 8px;">
+        <svg class="cart-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="26" height="26" style="color: #4a5568;">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span id="cartBadge" class="cart-badge-minimal" style="position: absolute; top: -8px; right: -8px; background: #2ecc71; color: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; border: 2px solid white;">0</span>
+    </a>
+    <div id="userMenu"></div>
+</div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div style="margin-bottom: 1.5rem;">
+            <a href="index.html" class="btn-back-home" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px;">
+                <span></span> Quay lại trang chủ
+            </a>
+        </div>
+
+        <h1 class="section-title"> Lịch sử đơn hàng</h1>
+        <p style="text-align: center; color: var(--text-gray); margin-bottom: 2rem;">
+            Theo dõi tình trạng các đơn hàng bạn đã đặt
+        </p>
+
+        <div id="ordersContainer">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Đang tải lịch sử đơn hàng...</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <p>&copy; 2026 Secondhand Shop. Cảm ơn bạn đã tin dùng sản phẩm cũ!</p>
+    </footer>
+
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadUserOrders();
+        });
+
+        async function loadUserOrders() {
+            const user = getCurrentUser();
+            const container = document.getElementById('ordersContainer');
+
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            try {
+                const orders = await fetchGet(`${API_ENDPOINTS.ORDERS}/user/${user.userId}`);
+
+                if (!orders || orders.length === 0) {
+                    container.innerHTML = `
+                        <div class="auth-container" style="text-align: center; padding: 3rem;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                            <h3>Bạn chưa có đơn hàng nào</h3>
+                            <a href="products.html" class="btn btn-primary" style="margin-top: 1.5rem;">Mua sắm ngay</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = orders.map(order => `
+                    <div class="auth-container" style="margin-bottom: 2rem; padding: 2rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                            <div>
+                                <h3 style="margin: 0; color: var(--primary-color);">Đơn hàng: #${order.orderCode || order.id}</h3>
+                                <small style="color: var(--text-gray);">Ngày đặt: ${new Date(order.createdAt).toLocaleDateString('vi-VN')}</small>
+                            </div>
+                            <span style="
+                                display: inline-block;
+                                padding: 6px 14px;
+                                border-radius: 20px;
+                                font-size: 0.85rem;
+                                font-weight: 600;
+                                color: white;
+                                background: ${getStatusColor(order.status)};">
+                                ${getStatusLabel(order.status)}
+                            </span>
+                        </div>
+
+                        <div class="order-items">
+                            ${order.orderItems.map(item => `
+                                <div style="display: flex; gap: 1rem; margin-bottom: 1rem; align-items: center;">
+                                    <img src="${item.imageUrl || 'images/placeholder.png'}"
+                                         onerror="this.src='images/placeholder.png'"
+                                         style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600;">${item.productName}</div>
+                                        <div style="font-size: 0.9rem; color: var(--text-gray);">SL: ${item.quantity} x ${formatCurrency(item.price)}</div>
+                                    </div>
+                                    <div style="font-weight: 700; color: var(--danger-color);">${formatCurrency(item.subtotal)}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid var(--border-color); display: flex; justify-content: flex-end; align-items: center; gap: 2rem;">
+                            <div style="font-size: 1.1rem;">Tổng cộng: <strong style="color: var(--danger-color); font-size: 1.4rem;">${formatCurrency(order.totalAmount)}</strong></div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                container.innerHTML = '<p style="text-align:center; color: red;">Lỗi khi tải lịch sử đơn hàng. Vui lòng thử lại sau.</p>';
+            }
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'PENDING':      return '#f39c12';
+                case 'CONFIRMED':    return '#3498db';
+                case 'SHIPPING':     return '#8e44ad';
+                case 'COMPLETED':    return '#27ae60';
+                case 'CANCELLED':    return '#e74c3c';
+                default:             return '#95a5a6';
+            }
+        }
+
+        function getStatusLabel(status) {
+            switch(status) {
+                case 'PENDING':      return '⏳ Chờ xác nhận';
+                case 'CONFIRMED':    return '✅ Đã xác nhận';
+                case 'SHIPPING':     return '🚚 Đang giao';
+                case 'COMPLETED':    return '🎉 Hoàn thành';
+                case 'CANCELLED':    return '❌ Đã hủy';
+                default:             return status;
+            }
+        }
+    </script>
+</body>
+</html>

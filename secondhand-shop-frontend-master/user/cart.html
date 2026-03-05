@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng - Secondhand Shop</title>
+    <link rel="stylesheet" href="css/user-style.css">
+    <style>
+        .cart-table {
+            width: 100%;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+        
+        .cart-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .cart-table th {
+            background: var(--light-color);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .cart-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .cart-item-image {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid var(--border-color);
+            background: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        
+        .quantity-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .quantity-input {
+            width: 60px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            padding: 0.3rem;
+            border-radius: 5px;
+        }
+        
+        .cart-summary {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            margin-top: 2rem;
+        }
+        
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .summary-row.total {
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-bottom: none;
+            margin-top: 1rem;
+            color: var(--danger-color);
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+        }
+        
+        .empty-cart-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+<header class="main-header">
+    <div class="header-container">
+        <div class="header-left">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🛍️</span>
+                <span>Secondhand Shop</span>
+            </a>
+            
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html" class="active">Trang chủ</a></li>
+                    <li><a href="products.html">Sản phẩm</a></li>
+                </ul>
+            </nav>
+        </div>
+        
+        <div class="header-right">
+            <a href="cart.html" class="cart-wrapper-minimal">
+    <svg class="cart-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="9" cy="21" r="1"></circle>
+        <circle cx="20" cy="21" r="1"></circle>
+        <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+    </svg>
+    <span class="cart-badge-minimal" id="cartBadge">0</span>
+</a>
+            
+            <div id="userMenu">
+            </div>
+        </div>
+    </div>
+</header>
+
+    <!-- MAIN CONTENT -->
+    <main class="container">
+        <h1>Giỏ hàng của bạn</h1>
+
+        <div id="cartContent">
+        </div>
+
+        <div id="cartSummary" style="display: none;">
+            <div class="cart-summary">
+                <h2>Tổng đơn hàng</h2>
+                <div class="summary-row">
+                    <span>Tạm tính:</span>
+                    <span id="subtotal">0đ</span>
+                </div>
+                <div class="summary-row">
+                    <span>Phí vận chuyển:</span>
+                    <span id="shippingFee">Miễn phí</span>
+                </div>
+                <div class="summary-row total">
+                    <span>Tổng cộng:</span>
+                    <span id="totalAmount">0đ</span>
+                </div>
+                <button class="btn btn-primary btn-block" onclick="proceedToCheckout()" style="margin-top: 1.5rem;">
+                    Tiến hành thanh toán →
+                </button>
+                <a href="products.html" class="btn btn-block" style="margin-top: 0.5rem; background: #f0f0f0; color: var(--dark-color);">
+                    ← Tiếp tục mua sắm
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="main-footer">
+        <p>&copy; 2026 Secondhand Shop. All rights reserved.</p>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script src="js/config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadCartItems();
+            updateCartBadge();
+        });
+
+        function loadCartItems() {
+            const cart = getCart();
+            const contentDiv = document.getElementById('cartContent');
+            const summaryDiv = document.getElementById('cartSummary');
+
+            if (cart.length === 0) {
+                contentDiv.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">🛒</div>
+                        <h2>Giỏ hàng trống</h2>
+                        <p>Bạn chưa có sản phẩm nào trong giỏ hàng</p>
+                        <a href="products.html" class="btn btn-primary" style="margin-top: 1.5rem;">
+                            Mua sắm ngay
+                        </a>
+                    </div>
+                `;
+                summaryDiv.style.display = 'none';
+                return;
+            }
+
+            // Render cart items
+            contentDiv.innerHTML = `
+                <div class="cart-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Đơn giá</th>
+                                <th>Số lượng</th>
+                                <th>Thành tiền</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${cart.map(item => `
+                                <tr>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 1rem;">
+                                            <img src="${item.imageUrl || '../images/placeholder.png'}" 
+                                                 alt="${item.productName}" 
+                                                 class="cart-item-image">
+                                            <strong>${item.productName}</strong>
+                                        </div>
+                                    </td>
+                                    <td><strong style="color: var(--danger-color);">${formatCurrency(item.price)}</strong></td>
+                                    <td>
+                                        <div class="quantity-controls">
+                                            <button class="quantity-btn" onclick="updateCartQuantity(${item.productId}, ${item.quantity - 1})">-</button>
+                                            <input type="number" 
+                                                   class="quantity-input" 
+                                                   value="${item.quantity}" 
+                                                   min="1"
+                                                   onchange="updateCartQuantity(${item.productId}, parseInt(this.value))">
+                                            <button class="quantity-btn" onclick="updateCartQuantity(${item.productId}, ${item.quantity + 1})">+</button>
+                                        </div>
+                                    </td>
+                                    <td><strong style="color: var(--danger-color);">${formatCurrency(item.price * item.quantity)}</strong></td>
+                                    <td>
+                                        <button class="btn btn-danger btn-sm" onclick="confirmRemoveItem(${item.productId}, '${item.productName}')">
+                                            🗑️ Xóa
+                                        </button>
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            // Update summary
+            const total = getCartTotal();
+            document.getElementById('subtotal').textContent = formatCurrency(total);
+            document.getElementById('totalAmount').textContent = formatCurrency(total);
+            summaryDiv.style.display = 'block';
+        }
+
+        function confirmRemoveItem(productId, productName) {
+            if (confirm(`Bạn có chắc muốn xóa "${productName}" khỏi giỏ hàng?`)) {
+                removeFromCart(productId);
+                showNotification('Đã xóa sản phẩm khỏi giỏ hàng!', 'success');
+            }
+        }
+
+        function proceedToCheckout() {
+            if (!isLoggedIn()) {
+                showNotification('Vui lòng đăng nhập để tiếp tục!', 'warning');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+                return;
+            }
+
+            window.location.href = 'checkout.html';
+        }
+    </script>
+</body>
+</html>
